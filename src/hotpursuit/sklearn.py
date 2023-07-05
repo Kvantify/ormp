@@ -118,14 +118,6 @@ class HotPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
             A_prime_inv[-1, -1] = A_prime_inv_bottom_right
         return X_prime, A_prime_inv
 
-    @staticmethod
-    def _eval_curr(X, y, A_inv):
-        proj = X.T @ y
-        coef = A_inv @ proj
-        y_hat = X @ coef
-        diff = y_hat - y
-        return np.dot(diff, diff)
-
     def fit(self, X, y):
         """Fit the model using X, y as training data.
 
