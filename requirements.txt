@@ -1,0 +1,11 @@
+# Run
+numpy
+jax
+
+# Dev
+build
+black
+flake8
+
+# Test
+pytest
