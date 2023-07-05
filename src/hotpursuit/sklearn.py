@@ -40,21 +40,6 @@ class HotPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
     intercept_ : float or ndarray of shape (n_targets,)
         Independent term in decision function.
 
-    n_iter_ : int or array-like
-        Number of active features across every target.
-
-    n_nonzero_coefs_ : int
-        The number of non-zero coefficients in the solution. If
-        `n_nonzero_coefs` is None and `tol` is None this value is either set
-        to 10% of `n_features` or 1, whichever is greater.
-
-    n_features_in_ : int
-        Number of features seen during :term:`fit`.
-
-    feature_names_in_ : ndarray of shape (`n_features_in_`,)
-        Names of features seen during :term:`fit`. Defined only when `X`
-        has feature names that are all strings.
-
     Notes
     -----
     TODO: Reference for HOT pursuit documentation.
