@@ -61,14 +61,16 @@ class HotPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
 
     Examples
     --------
-    >>> from sklearn.linear_model import HotPursuit
+    >>> from hotpursuit.sklearn import HotPursuit
     >>> from sklearn.datasets import make_regression
+    >>> from sklearn.preprocessing import normalize
     >>> X, y = make_regression(noise=4, random_state=0)
-    >>> reg = HotPursuit().fit(X, y)
+    >>> X = normalize(X, norm="l2", axis=0)
+    >>> reg = HotPursuit(n_nonzero_coefs=10, fit_intercept=False).fit(X, y)
     >>> reg.score(X, y)
-    0.9991...
+    0.9991885378269406
     >>> reg.predict(X[:1,])
-    array([-78.3854...])
+    array([-78.68765328])
     """
 
     _parameter_constraints: dict = {
