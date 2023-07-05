@@ -144,7 +144,6 @@ class HotPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
         n = X.shape[0]
         if np.any(np.abs(np.sum(X * X, axis=0) - 1) > 1e-7):
             raise ValueError("X must have normalized columns")
-        np.testing.assert_allclose(np.ones(n), np.sum(X * X, axis=0))
 
         # Keep track of which column indices have been included so far
         remaining_indices = np.ones(n, dtype=np.bool_)
