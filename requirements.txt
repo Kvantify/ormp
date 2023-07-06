@@ -1,10 +1,11 @@
 # Run
-numpy
 jax
+numpy
+scikit-learn
 
 # Dev
-build
 black
+build
 flake8
 
 # Test
