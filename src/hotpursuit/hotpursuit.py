@@ -50,10 +50,10 @@ class HotPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
 
     Attributes
     ----------
-    coef_ : ndarray of shape (n_features,) or (n_targets, n_features)
+    coef_ : ndarray of shape (n_features,)
         Parameter vector (w in the formula).
 
-    intercept_ : float or ndarray of shape (n_targets,)
+    intercept_ : float
         Independent term in decision function.
 
     Notes
