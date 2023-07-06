@@ -41,6 +41,13 @@ class HotPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
         The number of columns to add in one iteration of the algorithm. Lower
         values will give better results but fits take longer.
 
+    skip_validation : bool, default = False
+        Skip all input validation checks (in particular, validation of input
+        types and proper normalization of sample matrices); when using the
+        JAX implementation, validation ends up taking a significant portion of
+        the full running time, so consider making use of this attribute when
+        you can guarantee beforehand that inputs are valid.
+
     Attributes
     ----------
     coef_ : ndarray of shape (n_features,) or (n_targets, n_features)
@@ -73,6 +80,7 @@ class HotPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
         "fit_intercept": ["boolean"],
         "implementation": [StrOptions({"numpy", "jax"})],
         "greediness": [Interval(Integral, 1, None, closed="left")],
+        "skip_validation": ["boolean"],
     }
 
     def __init__(
@@ -82,7 +90,8 @@ class HotPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
         tol=None,
         fit_intercept=True,
         implementation="numpy",
-        greediness=1
+        greediness=1,
+        skip_validation=False
     ):
         self.n_nonzero_coefs = n_nonzero_coefs
         self.greediness = greediness
@@ -95,6 +104,7 @@ class HotPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
                 "the only implemented value of fit_intercept is False"
             )
         self.fit_intercept = fit_intercept
+        self.skip_validation = skip_validation
 
     def fit(self, X, y):
         """Fit the model using X, y as training data.
@@ -112,12 +122,11 @@ class HotPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
         self : object
             Returns an instance of self.
         """
-        X, y = self._validate_data(X, y, multi_output=True, y_numeric=True)
-
-        # Ensure X is normalized
-        if np.any(np.abs(np.sum(X * X, axis=0) - 1) > 1e-7):
-            raise ValueError("X must have normalized columns")
-
+        if not self.skip_validation:
+            X, y = self._validate_data(X, y, multi_output=True, y_numeric=True)
+            # Ensure X is normalized
+            if np.any(np.abs(np.sum(X * X, axis=0) - 1) > 1e-7):
+                raise ValueError("X must have normalized columns")
         if self.implementation == "numpy":
             implementation = impl_np.hot_pursuit
             indices = impl_np.hot_pursuit
