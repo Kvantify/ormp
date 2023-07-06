@@ -119,13 +119,13 @@ class HotPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
                 from . import impl_jax
 
                 implementation = impl_jax.hot_pursuit
-            except ImportError:
+            except ImportError as e:
                 raise RuntimeError(
                     "JAX not available; install JAX following the instructions on "
                     + "https://github.com/google/jax/#installation and for more "
                     + "information on why JAX is not included explicitly as a "
                     + "dependency, see (TODO: URL)."
-                )
+                ) from e
         # TODO: Get actual weights instead of just indices from implementations.
         indices = implementation(X, y, self.n_nonzero_coefs, self.greediness)
 
