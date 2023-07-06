@@ -1,5 +1,5 @@
 # Run
-jax
+jax[cpu]
 numpy
 scikit-learn
 
