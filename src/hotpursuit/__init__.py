@@ -1,4 +1,4 @@
 from .hotpursuit import HotPursuit
 
 __version__ = "0.0.1"
-__all__ = ('HotPursuit',)
+__all__ = ("HotPursuit",)

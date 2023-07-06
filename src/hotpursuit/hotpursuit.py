@@ -82,10 +82,12 @@ class HotPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
         self.implementation = implementation
         if tol is not None:
             raise NotImplementedError("tol is not yet implemented")
+        self.tol = tol
         if fit_intercept:
             raise NotImplementedError(
                 "the only implemented value of fit_intercept is False"
             )
+        self.fit_intercept = fit_intercept
 
     def fit(self, X, y):
         """Fit the model using X, y as training data.
@@ -126,6 +128,7 @@ class HotPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
                 )
         # TODO: Get actual weights instead of just indices from implementations.
         indices = implementation(X, y, self.n_nonzero_coefs, self.greediness)
+
         # Build solution
         reg = LinearRegression(fit_intercept=False).fit(X[:, indices], y)
         self.coef_ = np.zeros(X.shape[1])

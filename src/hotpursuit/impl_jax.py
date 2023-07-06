@@ -62,26 +62,32 @@ def find_next_state(X_curr, A_inv_curr, y, us):
     return X_curr, A_inv_curr, new_col
 
 
+def hot_pursuit_impl(X, y, n_nonzero_coefs):
+    n = X.shape[0]
+    X_curr = jnp.empty((n, 0))
+    A_inv_curr = jnp.empty((0, 0))
+    us = X
+    k = n_nonzero_coefs
+    chosen_indices = jnp.empty(k, dtype=jnp.int32)
+    for i in range(k):
+        X_curr, A_inv_curr, new_col = find_next_state(X_curr, A_inv_curr, y, us)
+        # Remove the new_col'th column from us
+        us = jnp.where(jnp.arange(us.shape[1] - 1) < new_col, us[:, :-1], us[:, 1:])
+        chosen_indices = chosen_indices.at[i].set(new_col)
+    return chosen_indices
+
+
+hot_pursuit_impl = jax.jit(hot_pursuit_impl, static_argnames=("n_nonzero_coefs",))
+
+
 def hot_pursuit(X, y, n_nonzero_coefs, greediness):
     if greediness != 1:
         return NotImplementedError(
             "for the JAX implementation, only greediness=1 is supported"
         )
-    n, m = X.shape
-    chosen_indices = np.zeros(n, dtype=jnp.bool_)
-    X_curr = jnp.empty((n, 0))
-    A_inv_curr = jnp.empty((0, 0))
-    us = X
-    k = n_nonzero_coefs
-    indices_left = list(range(m))
-    for _ in range(k):
-        X_curr, A_inv_curr, new_col = find_next_state(X_curr, A_inv_curr, y, us)
-        # Remove the new_col'th column from us; note that it is possible to do
-        # this with JAX as well, but it does end up being a bit awkward, since
-        # new_col is dynamic. An option that works is
-        #   us = jnp.where(jnp.arange(us.shape[1] - 1) < new_col, us[:,:-1], us[:,1:])
-        # but we keep it simple here.
-        us = np.delete(us, new_col, axis=1)
-        chosen_index = indices_left.pop(new_col)
-        chosen_indices[chosen_index] = True
-    return chosen_indices
+    removed_columns = hot_pursuit_impl(X, y, n_nonzero_coefs)
+    indices = np.zeros(X.shape[1], dtype=np.bool_)
+    to_take = list(range(X.shape[1]))
+    for index in removed_columns:
+        indices[to_take.pop(index)] = True
+    return indices
