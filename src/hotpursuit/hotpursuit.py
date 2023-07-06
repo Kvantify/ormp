@@ -30,6 +30,13 @@ class HotPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
         to false, no intercept will be used in calculations
         (i.e. data is expected to be centered).
 
+    implementation : str, default="numpy"
+        Which backend to use under the hood; allowed values are "numpy" and
+        "jax". When using "jax", it is assumed that JAX is installed, and that
+        any preconfiguration, such as installation of CUDA to make use of GPUs,
+        has already been handled. Refer to the JAX installation guide at
+        https://github.com/google/jax/#installation for possible options.
+
     greediness : int, default=1
         The number of columns to add in one iteration of the algorithm. Lower
         values will give better results but fits take longer.
