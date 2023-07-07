@@ -1,4 +1,5 @@
 """Implementation of scikit-learn interface to the solvers."""
+import functools
 from numbers import Integral, Real
 
 import numpy as np
@@ -48,6 +49,15 @@ class HotPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
         the full running time, so consider making use of this attribute when
         you can guarantee beforehand that inputs are valid.
 
+    jax_jit : bool, default = True
+        Whether or not to JIT compile the JAX implementation. This can lead to
+        great performance improvements at the cost of upfront compilation. Note
+        that in either case, the first fit will take longer than subsequent ones,
+        but not using the JIT functionality gives some flexibility; for example,
+        you can change the value of n_nonzero_coefs without forcing a full
+        recompile. For choices of `implementation` other than JAX, this does
+        nothing.
+
     Attributes
     ----------
     coef_ : ndarray of shape (n_features,)
@@ -81,6 +91,7 @@ class HotPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
         "implementation": [StrOptions({"numpy", "jax"})],
         "greediness": [Interval(Integral, 1, None, closed="left")],
         "skip_validation": ["boolean"],
+        "jax_jit": ["boolean"],
     }
 
     def __init__(
@@ -91,7 +102,8 @@ class HotPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
         fit_intercept=True,
         implementation="numpy",
         greediness=1,
-        skip_validation=False
+        skip_validation=False,
+        jax_jit=True
     ):
         self.n_nonzero_coefs = n_nonzero_coefs
         self.greediness = greediness
@@ -105,6 +117,7 @@ class HotPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
             )
         self.fit_intercept = fit_intercept
         self.skip_validation = skip_validation
+        self.jax_jit = jax_jit
 
     def fit(self, X, y):
         """Fit the model using X, y as training data.
@@ -134,7 +147,9 @@ class HotPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
             try:
                 from . import impl_jax
 
-                implementation = impl_jax.hot_pursuit
+                implementation = functools.partial(
+                    impl_jax.hot_pursuit, use_jit=self.jax_jit
+                )
             except ImportError as e:
                 raise RuntimeError(
                     "JAX not available; install JAX following the instructions on "

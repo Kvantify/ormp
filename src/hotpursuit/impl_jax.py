@@ -4,7 +4,6 @@ import jax.numpy as jnp
 import numpy as np
 
 
-@jax.jit
 def add_column_jax(X, A_inv, u):
     X_prime = jnp.column_stack((X, u))
     w = X.T @ u
@@ -25,7 +24,6 @@ def add_column_jax(X, A_inv, u):
     return X_prime, A_prime_inv
 
 
-@jax.jit
 def find_next_state(X_curr, A_inv_curr, y, us):
     pre_calc_proj = X_curr.T @ y
     ws = X_curr.T @ us  # Can be simplified as we know X_prev.T @ us
@@ -69,23 +67,26 @@ def hot_pursuit_impl(X, y, n_nonzero_coefs):
     us = X
     k = n_nonzero_coefs
     chosen_indices = jnp.empty(k, dtype=jnp.int32)
+    # TODO: Could this be a jax.lax.fori_loop?
     for i in range(k):
         X_curr, A_inv_curr, new_col = find_next_state(X_curr, A_inv_curr, y, us)
         # Remove the new_col'th column from us
         us = jnp.where(jnp.arange(us.shape[1] - 1) < new_col, us[:, :-1], us[:, 1:])
+        # us = jnp.delete(us, new_col, axis=1)
         chosen_indices = chosen_indices.at[i].set(new_col)
     return chosen_indices
 
 
-hot_pursuit_impl = jax.jit(hot_pursuit_impl, static_argnames=("n_nonzero_coefs",))
+hot_pursuit_impl_jit = jax.jit(hot_pursuit_impl, static_argnames=("n_nonzero_coefs",))
 
 
-def hot_pursuit(X, y, n_nonzero_coefs, greediness):
+def hot_pursuit(X, y, n_nonzero_coefs, greediness, use_jit):
     if greediness != 1:
         return NotImplementedError(
             "for the JAX implementation, only greediness=1 is supported"
         )
-    removed_columns = hot_pursuit_impl(X, y, n_nonzero_coefs)
+    impl = hot_pursuit_impl_jit if use_jit else hot_pursuit_impl
+    removed_columns = impl(X, y, n_nonzero_coefs)
     indices = np.zeros(X.shape[1], dtype=np.bool_)
     to_take = list(range(X.shape[1]))
     for index in removed_columns:
