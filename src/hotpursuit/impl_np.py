@@ -31,15 +31,15 @@ def hot_pursuit(X, y, n_nonzero_coefs, greediness):
     # yields a ~26% overall reduction in time to fit.
     dtype = np.float32
     # Keep track of which column indices have been included so far
-    n = X.shape[0]
-    remaining_indices = np.ones(n, dtype=np.bool_)
+    n, m = X.shape
+    remaining_indices = np.ones(m, dtype=np.bool_)
     X = X.astype(dtype)
     y = y.astype(dtype)
     X_curr = np.empty((n, 0), dtype=dtype)
     A_inv_curr = np.empty((0, 0), dtype=dtype)
     k = n_nonzero_coefs
-    while remaining_indices.sum() > n - k:
-        d = min(greediness, remaining_indices.sum() - (n - k))
+    while remaining_indices.sum() > m - k:
+        d = min(greediness, remaining_indices.sum() - (m - k))
         pre_calc_proj = X_curr.T @ y
         us = X[:, remaining_indices]
         ws = X_curr.T @ us  # TODO: This can be simplified as we know X_prev.T @ us

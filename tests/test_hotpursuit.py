@@ -9,7 +9,7 @@ from hotpursuit.hotpursuit import HotPursuit
 
 @pytest.mark.parametrize("implementation", ["numpy", "jax"])
 def test_agreement_with_omp_on_simple_example(implementation):
-    X, y = make_regression(noise=4, random_state=0)
+    X, y = make_regression(n_samples=100, n_features=90, noise=4, random_state=0)
     X = normalize(X, norm="l2", axis=0)
 
     n_nonzero_coefs = 10
