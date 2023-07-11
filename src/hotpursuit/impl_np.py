@@ -38,8 +38,8 @@ def hot_pursuit(X, y, n_nonzero_coefs, greediness):
     X_curr = np.empty((n, 0), dtype=dtype)
     A_inv_curr = np.empty((0, 0), dtype=dtype)
     k = n_nonzero_coefs
-    d = greediness
     while remaining_indices.sum() > n - k:
+        d = min(greediness, remaining_indices.sum() - (n - k))
         pre_calc_proj = X_curr.T @ y
         us = X[:, remaining_indices]
         ws = X_curr.T @ us  # TODO: This can be simplified as we know X_prev.T @ us
