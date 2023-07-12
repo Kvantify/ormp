@@ -9,6 +9,19 @@ from hotpursuit.hotpursuit import HotPursuit
 
 
 @pytest.mark.parametrize("implementation", ["numpy", "jax"])
+def test_hot_pursuit_raises_when_too_many_coefs_are_required(implementation):
+    X = np.array([[1, 0], [0, 1]])
+    y = np.array([3, 1])
+
+    with pytest.raises(ValueError):
+        HotPursuit(
+            n_nonzero_coefs=3,
+            fit_intercept=False,
+            implementation=implementation,
+        ).fit(X, y)
+
+
+@pytest.mark.parametrize("implementation", ["numpy", "jax"])
 def test_1d_example(implementation):
     X = np.array([[1]])
     y = np.array([3])
