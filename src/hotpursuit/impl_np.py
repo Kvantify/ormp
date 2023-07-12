@@ -116,7 +116,7 @@ def hot_pursuit(X, y, n_nonzero_coefs, tol, greediness):
             current_objective = (
                 eval_curr(X_curr, A_inv_curr, y) if d > 1 else np.min(all_evals)
             )
-            if current_objective < tol:
+            if current_objective <= tol:
                 break
             elif remaining_indices.sum() == 0:
                 raise RuntimeError(
