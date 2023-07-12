@@ -4,7 +4,7 @@ import jax.numpy as jnp
 import numpy as np
 
 
-def add_column_jax(X, A_inv, u):
+def add_column(X, A_inv, u):
     X_prime = jnp.column_stack((X, u))
     w = X.T @ u
     A_inv_w = A_inv @ w
@@ -56,7 +56,7 @@ def find_next_state(X_curr, A_inv_curr, y, us):
 
     # Take best
     new_col = jnp.argmin(all_evals)
-    X_curr, A_inv_curr = add_column_jax(X_curr, A_inv_curr, us[:, new_col])
+    X_curr, A_inv_curr = add_column(X_curr, A_inv_curr, us[:, new_col])
     return X_curr, A_inv_curr, new_col
 
 
