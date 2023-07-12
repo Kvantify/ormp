@@ -21,8 +21,6 @@ def test_agreement_with_omp_on_simple_example(implementation):
         fit_intercept=False,
         implementation=implementation,
     ).fit(X, y)
-    print(reg_omp.coef_)
-    print(reg_hp.coef_)
     assert reg_hp.score(X, y) == pytest.approx(reg_omp.score(X, y))
 
 
