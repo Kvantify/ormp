@@ -140,6 +140,13 @@ class HotPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
             # Ensure X is normalized
             if np.any(np.abs(np.sum(X * X, axis=0) - 1) > 1e-7):
                 raise ValueError("X must have normalized columns")
+        n_features = X.shape[1]
+        if self.n_nonzero_coefs is None and self.tol is None:
+            # default for n_nonzero_coefs is 0.1 * n_features
+            # but at least one.
+            self.n_nonzero_coefs_ = max(int(0.1 * n_features), 1)
+        else:
+            self.n_nonzero_coefs_ = self.n_nonzero_coefs
         if self.implementation == "numpy":
             implementation = impl_np.hot_pursuit
             indices = impl_np.hot_pursuit

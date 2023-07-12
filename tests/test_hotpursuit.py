@@ -24,3 +24,14 @@ def test_agreement_with_omp_on_simple_example(implementation):
     print(reg_omp.coef_)
     print(reg_hp.coef_)
     assert reg_hp.score(X, y) == pytest.approx(reg_omp.score(X, y))
+
+
+@pytest.mark.parametrize("implementation", ["numpy", "jax"])
+def test_ten_percent_of_features_used_by_default(implementation):
+    X, y = make_regression(n_samples=100, n_features=90, noise=4, random_state=0)
+    X = normalize(X, norm="l2", axis=0)
+    reg = HotPursuit(
+        fit_intercept=False,
+        implementation=implementation,
+    ).fit(X, y)
+    assert (reg.coef_ != 0).sum() == 9
