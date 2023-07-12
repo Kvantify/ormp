@@ -9,6 +9,18 @@ from hotpursuit.hotpursuit import HotPursuit
 
 
 @pytest.mark.parametrize("implementation", ["numpy", "jax"])
+def test_1d_example(implementation):
+    X = np.array([[1]])
+    y = np.array([3])
+    reg_hp = HotPursuit(
+        n_nonzero_coefs=1,
+        fit_intercept=False,
+        implementation=implementation,
+    ).fit(X, y)
+    assert np.all(reg_hp.coef_ == y)
+
+
+@pytest.mark.parametrize("implementation", ["numpy", "jax"])
 def test_2d_example(implementation):
     X = np.array([[1, 0], [0, 1]])
     y = np.array([3, 1])
@@ -16,7 +28,6 @@ def test_2d_example(implementation):
         n_nonzero_coefs=2,
         fit_intercept=False,
         implementation=implementation,
-        jax_jit=False,
     ).fit(X, y)
     assert np.all(reg_hp.coef_ == y)
 
