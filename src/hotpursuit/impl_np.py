@@ -110,7 +110,12 @@ def hot_pursuit(X, y, n_nonzero_coefs, tol, greediness):
         remaining_indices[to_choose] = 0
 
         if tol is not None:
-            current_objective = eval_curr(X_curr, A_inv_curr, y)
+            # Calculate the norm square of the residual now that all columns have
+            # been added; in the special case where d == 1, we already have that from
+            # our calculations above.
+            current_objective = (
+                eval_curr(X_curr, A_inv_curr, y) if d > 1 else np.min(all_evals)
+            )
             if current_objective < tol:
                 break
             elif remaining_indices.sum() == 0:
