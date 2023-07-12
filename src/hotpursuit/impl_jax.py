@@ -72,7 +72,8 @@ def hot_pursuit_impl(X, y, n_nonzero_coefs):
         X_curr, A_inv_curr, new_col = find_next_state(X_curr, A_inv_curr, y, us)
         # Remove the new_col'th column from us
         us = jnp.where(jnp.arange(us.shape[1] - 1) < new_col, us[:, :-1], us[:, 1:])
-        # us = jnp.delete(us, new_col, axis=1)
+        # Note that in particular, the below alternative wouldn't work a priori:
+        #    us = jnp.delete(us, new_col, axis=1)
         chosen_indices = chosen_indices.at[i].set(new_col)
     return chosen_indices
 
