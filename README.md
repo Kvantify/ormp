@@ -4,7 +4,21 @@ This repository includes various Python implementations of the HOT pursuit algor
 
 ## Introduction
 
-(TODO: Write about the problem this is solving)
+Here, we aim to solve various versions of sparse linear regression, also known in the signal processing community as sparse approximation, sparse representation, compressed sensing or signal reconstruction; other algorithms include [matching pursuit](https://en.wikipedia.org/wiki/Matching_pursuit) and its variants, such as orthogonal matching pursuit (OMP), regularized OMP, stagewise OMP, compressed sensinting matching pursuit, and subspace pursuit.
+
+The problem we aim to solve is the following: Given an $n$-dimensional vector $y \in \mathbb{R}^n$ of observed values, and an $n \times p$-dimensional matrix $X$ of regressors, find parameters $\beta \in \mathbb{R}^p$ so that $y = X\beta + \varepsilon$, with $\varepsilon$ as small as possible; this is nothing but linear regression, but we also want to require that $\beta$ has only few non-zero entries.
+
+Specifically, let $S_k = \lbrace \beta \in \mathbb{R}^p \mid \lVert \beta \rVert_0 \leq k \rbrace$ be the set of vectors in $\mathbb{R}^p$ with at most $k$ non-zero entries. We then consider the problem of determining
+
+$$\min_{\beta \in S_k} \lVert X\beta - y \rVert_2,$$
+
+for a fixed allowed number of non-zero entries $k \geq 0$. We also consider the corresponding problem of determining the smallest value of $k$ to achieve a given tolerance $T \geq 0$ on the residual vector $\varepsilon$,
+
+$$\min \lbrace k \in \mathbb{N} \mid \exists \beta \in S_k : \lVert X\beta - y \rVert_2 \leq T \rbrace.$$
+
+We do not solve the problems to optimality but instead provide a greedy heuristic which iteratively adds non-zero entries (hence features to the linear model). This is similar to what happens in matching pursuit, where one iteratively picks the column with maximum inner product with the current residual; here, instead, we choose the column which minimizes the actual objective function (the length of the projection of $y$ on the subspace obtained by adding the column); generally speaking, this can be seen as a more thorough greedy approach than matching pursuit, which will, at least in cases of interest to us, yield better results but generally at the cost of spending more time to get those results.
+
+The solvers come with implementations of the scikit-learn estimator API and therefore can be used as a part of scikit-learn pipelines. We provide an implementation that relies only on NumPy, as well as an implementation that makes use of JAX to be able to make efficient use of any available GPUs/TPUs.
 
 ## Installation
 
