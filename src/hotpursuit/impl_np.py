@@ -98,7 +98,7 @@ def hot_pursuit(X, y, n_nonzero_coefs, tol, greediness):
 
         diffs = y_hats - y[:, np.newaxis]
         all_evals = np.sum(diffs * diffs, axis=0)
-        to_choose = np.argpartition(all_evals, d)[:d]
+        to_choose = np.argpartition(all_evals, d - 1)[:d]
 
         evals = {p: all_evals[i] for i, p in enumerate(np.where(remaining_indices)[0])}
         sorted_evals = sorted(evals.items(), key=lambda x: x[1])
