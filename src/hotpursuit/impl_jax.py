@@ -80,10 +80,14 @@ def hot_pursuit_impl(X, y, n_nonzero_coefs):
 hot_pursuit_impl_jit = jax.jit(hot_pursuit_impl, static_argnames=("n_nonzero_coefs",))
 
 
-def hot_pursuit(X, y, n_nonzero_coefs, greediness, use_jit):
+def hot_pursuit(X, y, n_nonzero_coefs, tol, greediness, use_jit):
     if greediness != 1:
         return NotImplementedError(
             "for the JAX implementation, only greediness=1 is supported"
+        )
+    if tol is not None:
+        return NotImplementedError(
+            "for the JAX implementation, only tol=None is supported"
         )
     impl = hot_pursuit_impl_jit if use_jit else hot_pursuit_impl
     removed_columns = impl(X, y, n_nonzero_coefs)

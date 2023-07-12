@@ -26,7 +26,15 @@ def add_column(X, A_inv, u, dtype):
     return X_prime, A_prime_inv
 
 
-def hot_pursuit(X, y, n_nonzero_coefs, greediness):
+def eval_curr(X, A_inv, y):
+    proj = X.T @ y
+    coef = A_inv @ proj
+    y_hat = X @ coef
+    residual = y_hat - y
+    return np.dot(residual, residual)
+
+
+def hot_pursuit(X, y, n_nonzero_coefs, tol, greediness):
     # On our test cases, explicitly sticking to np.float64 instead of np.float32
     # yields a ~26% overall reduction in time to fit.
     dtype = np.float32
@@ -38,8 +46,15 @@ def hot_pursuit(X, y, n_nonzero_coefs, greediness):
     X_curr = np.empty((n, 0), dtype=dtype)
     A_inv_curr = np.empty((0, 0), dtype=dtype)
     k = n_nonzero_coefs
-    while remaining_indices.sum() > m - k:
-        d = min(greediness, remaining_indices.sum() - (m - k))
+    # If tol is none, select columns until we have selected k of them;
+    # otherwise select columns potentially forever (and break if we reach the
+    # desired tolerance)
+    while tol is not None or remaining_indices.sum() > m - k:
+        d = greediness
+        if tol is None:
+            # Ensure that we do not take more columns than allowed
+            # in case k is specified
+            d = min(d, remaining_indices.sum() - (m - k))
         pre_calc_proj = X_curr.T @ y
         us = X[:, remaining_indices]
         ws = X_curr.T @ us  # TODO: This can be simplified as we know X_prev.T @ us
@@ -93,4 +108,15 @@ def hot_pursuit(X, y, n_nonzero_coefs, greediness):
                 X_curr, A_inv_curr, X[:, new_col], dtype=dtype
             )
         remaining_indices[to_choose] = 0
+
+        if tol is not None:
+            current_objective = eval_curr(X_curr, A_inv_curr, y)
+            if current_objective < tol:
+                break
+            elif remaining_indices.sum() == 0:
+                raise RuntimeError(
+                    f"the given tolerance ({tol}) could not be achieved; "
+                    f"the best achieved value was {current_objective}."
+                )
+
     return ~remaining_indices

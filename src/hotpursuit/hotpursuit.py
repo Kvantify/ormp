@@ -24,7 +24,7 @@ class HotPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
         default) this value is set to 10% of n_features.
 
     tol : float, default=None
-        Maximum norm of the residual. If not None, overrides n_nonzero_coefs.
+        Maximum squared norm of the residual. If not None, overrides n_nonzero_coefs.
 
     fit_intercept : bool, default=True
         Whether to calculate the intercept for this model. If set
@@ -108,8 +108,8 @@ class HotPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
         self.n_nonzero_coefs = n_nonzero_coefs
         self.greediness = greediness
         self.implementation = implementation
-        if tol is not None:
-            raise NotImplementedError("tol is not yet implemented")
+        if tol is not None and implementation == "jax":
+            raise NotImplementedError("tol is not yet implemented for the JAX solver")
         self.tol = tol
         if fit_intercept:
             raise NotImplementedError(
@@ -147,6 +147,11 @@ class HotPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
             self.n_nonzero_coefs_ = max(int(0.1 * n_features), 1)
         else:
             self.n_nonzero_coefs_ = self.n_nonzero_coefs
+
+        if self.tol is None and self.n_nonzero_coefs_ > X.shape[1]:
+            raise ValueError(
+                "The number of atoms cannot be more than the number of features"
+            )
         if self.implementation == "numpy":
             implementation = impl_np.hot_pursuit
             indices = impl_np.hot_pursuit
@@ -165,7 +170,7 @@ class HotPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
                     + "dependency, see (TODO: URL)."
                 ) from e
         # TODO: Get actual weights instead of just indices from implementations.
-        indices = implementation(X, y, self.n_nonzero_coefs, self.greediness)
+        indices = implementation(X, y, self.n_nonzero_coefs_, self.tol, self.greediness)
 
         # Build solution
         reg = LinearRegression(fit_intercept=False).fit(X[:, indices], y)
