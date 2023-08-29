@@ -35,93 +35,52 @@ def eval_curr(X, A_inv, y):
 
 
 def hot_pursuit(X, y, n_nonzero_coefs, tol, greediness):
-    # On our test cases, explicitly sticking to np.float64 instead of np.float32
-    # yields a ~26% overall reduction in time to fit.
     dtype = np.float32
-    # Keep track of which column indices have been included so far
-    n, m = X.shape
-    remaining_indices = np.ones(m, dtype=np.bool_)
     X = X.astype(dtype)
     y = y.astype(dtype)
-    X_curr = np.empty((n, 0), dtype=dtype)
-    A_inv_curr = np.empty((0, 0), dtype=dtype)
+    # Keep track of which column indices have been included so far
+    n, m = X.shape
+    xt = X.T
+    xtbp = xt @ y
     k = n_nonzero_coefs
+    alpnormsq = np.ones(m, dtype=dtype)
+    unselected = np.ones(m, dtype=np.bool_)
+    projs = np.empty((k if tol is None else n, n), dtype=dtype)
+    p = 0
     # If tol is none, select columns until we have selected k of them;
     # otherwise select columns potentially forever (and break if we reach the
     # desired tolerance)
-    while tol is not None or remaining_indices.sum() > m - k:
+    while True:
+        if tol is not None and p == m:
+            raise RuntimeError(f"the given tolerance ({tol}) could not be achieved")
+
         d = greediness
         if tol is None:
             # Ensure that we do not take more columns than allowed
             # in case k is specified
-            d = min(d, remaining_indices.sum() - (m - k))
-        pre_calc_proj = X_curr.T @ y
-        us = X[:, remaining_indices]
-        ws = X_curr.T @ us  # TODO: This can be simplified as we know X_prev.T @ us
-        A_inv_ws = A_inv_curr @ ws
-        w_t_A_inv_ws = np.sum(ws * A_inv_ws, axis=0)
-        one_by_denominators = 1 / (1 - w_t_A_inv_ws)
+            d = min(d, k - p)
 
-        top_left_static = A_inv_curr
-        top_left_dynamic = (
-            np.einsum("jk, ik, j->ik", A_inv_ws, A_inv_ws, pre_calc_proj)
-            * one_by_denominators
+        allobjs = np.divide(
+            xtbp**2, alpnormsq, out=np.zeros(m, dtype=dtype), where=unselected
         )
-        off_diags = -A_inv_ws * one_by_denominators[np.newaxis, :]
-
-        proj_bottom = us.T @ y
-        weight_top_left_static = top_left_static @ pre_calc_proj
-        weight_top_left_dynamic = top_left_dynamic
-        weight_top_left = (
-            weight_top_left_static[:, np.newaxis] + weight_top_left_dynamic
-        )
-        weight_top_right = off_diags * proj_bottom
-        weight_top = weight_top_left + weight_top_right
-
-        weight_bottom_left = np.einsum("ij,i->j", off_diags, pre_calc_proj)
-        weight_bottom_right = one_by_denominators * proj_bottom
-        weight_bottom = weight_bottom_left + weight_bottom_right
-
-        # The below alternative is almost faster, and gets rid of top_left_dynamic
-        # above, which would be nice, but we keep the above for performance:
-        #
-        # weight_top_small = weight_top_left_static[:,np.newaxis] +\
-        #      off_diags * proj_bottom
-        # p1 = np.einsum(
-        #     'mi, jk, ik, j->mk', X_curr, A_inv_ws,
-        #     A_inv_ws, pre_calc_proj, optimize='optimal'
-        # ) * one_by_denominators
-        # p2 = X_curr @ weight_top_small
-        # y_hats = p1 + p2 + us * weight_bottom
-
-        y_hats = X_curr @ weight_top + us * weight_bottom
-
-        diffs = y_hats - y[:, np.newaxis]
-        all_evals = np.sum(diffs * diffs, axis=0)
-        to_choose = np.argpartition(all_evals, d - 1)[:d]
-
-        evals = {p: all_evals[i] for i, p in enumerate(np.where(remaining_indices)[0])}
-        sorted_evals = sorted(evals.items(), key=lambda x: x[1])
-        to_choose = [x for x, _ in sorted_evals[:d]]
-        for new_col in to_choose:
-            X_curr, A_inv_curr = add_column(
-                X_curr, A_inv_curr, X[:, new_col], dtype=dtype
-            )
-        remaining_indices[to_choose] = 0
-
-        if tol is not None:
-            # Calculate the norm square of the residual now that all columns have
-            # been added; in the special case where d == 1, we already have that from
-            # our calculations above.
-            current_objective = (
-                eval_curr(X_curr, A_inv_curr, y) if d > 1 else np.min(all_evals)
-            )
-            if current_objective <= tol:
-                break
-            elif remaining_indices.sum() == 0:
-                raise RuntimeError(
-                    f"the given tolerance ({tol}) could not be achieved; "
-                    f"the best achieved value was {current_objective}."
-                )
-
-    return ~remaining_indices
+        to_choose = np.argpartition(-allobjs, d - 1)[:d]
+        for l in to_choose:
+            unselected[l] = False
+            if tol is None and p == k - 1:
+                return ~unselected
+            al = X[:, l]
+            proj_ort_al = al - projs[:p].T @ (projs[:p] @ al)
+            proj_ort_al /= np.sqrt(np.dot(proj_ort_al, proj_ort_al))
+            projs[p] = proj_ort_al
+            p += 1
+            if tol is not None:
+                # To check if we are within the desired tolerance, we do
+                # explicitly calculate the objective. This can likely be
+                # done much more efficiently.
+                y_hat = projs[:p].T @ (projs[:p] @ y) - y
+                score = np.dot(y_hat, y_hat)
+                if score < tol:
+                    return ~unselected
+            xt_proj_ort_al = xt @ proj_ort_al
+            alpnormsq -= xt_proj_ort_al**2
+            xtbp -= np.dot(proj_ort_al, y) * xt_proj_ort_al

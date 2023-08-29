@@ -22,6 +22,19 @@ def test_hot_pursuit_raises_when_too_many_coefs_are_required(implementation):
 
 
 @pytest.mark.parametrize("implementation", ["numpy", "jax"])
+def test_empty_example_one_coef(implementation):
+    X = np.array([[]])
+    y = np.array([])
+
+    with pytest.raises(ValueError):
+        HotPursuit(
+            n_nonzero_coefs=1,
+            fit_intercept=False,
+            implementation=implementation,
+        ).fit(X, y)
+
+
+@pytest.mark.parametrize("implementation", ["numpy", "jax"])
 def test_1d_example(implementation):
     X = np.array([[1]])
     y = np.array([3])
@@ -81,3 +94,19 @@ def test_tolerance(tol, n_nonzero_coefs):
     assert (reg.coef_ != 0).sum() == n_nonzero_coefs
     y_hat = reg.predict(X)
     assert np.linalg.norm(y_hat - y) ** 2 < tol
+
+
+@pytest.mark.parametrize(
+    "greediness,expected_residual",
+    [(1, 1111), (2, 1216), (3, 1231), (4, 1478), (5, 1286)],
+)
+def test_greediness_non_divisible(greediness, expected_residual):
+    X, y = make_regression(n_samples=100, n_features=90, noise=4, random_state=0)
+    X = normalize(X, norm="l2", axis=0)
+    n_nonzero_coefs = 17
+    reg = HotPursuit(
+        fit_intercept=False, n_nonzero_coefs=n_nonzero_coefs, greediness=greediness
+    ).fit(X, y)
+    assert (reg.coef_ != 0).sum() == n_nonzero_coefs
+    residual = np.linalg.norm(reg.predict(X) - y) ** 2
+    assert int(residual) == expected_residual
