@@ -96,6 +96,13 @@ def test_tolerance(tol, n_nonzero_coefs):
     assert np.linalg.norm(y_hat - y) ** 2 < tol
 
 
+def test_unachievable_tolerance():
+    X, y = make_regression(n_samples=100, n_features=90, noise=4, random_state=0)
+    X = normalize(X, norm="l2", axis=0)
+    with pytest.raises(RuntimeError):
+        HotPursuit(fit_intercept=False, tol=320).fit(X, y)
+
+
 @pytest.mark.parametrize(
     "greediness,expected_residual",
     [(1, 1111), (2, 1216), (3, 1231), (4, 1478), (5, 1286)],
