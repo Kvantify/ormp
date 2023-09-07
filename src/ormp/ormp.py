@@ -69,7 +69,8 @@ class OrderRecursiveMatchingPursuit(MultiOutputMixin, RegressorMixin, LinearMode
     >>> from sklearn.preprocessing import normalize
     >>> X, y = make_regression(noise=4, random_state=0)
     >>> X = normalize(X, norm="l2", axis=0)
-    >>> reg = OrderRecursiveMatchingPursuit(n_nonzero_coefs=10, fit_intercept=False).fit(X, y)
+    >>> reg = OrderRecursiveMatchingPursuit(n_nonzero_coefs=10, fit_intercept=False)
+    >>> reg.fit(X, y)
     >>> reg.score(X, y)
     0.9991885378269406
     >>> reg.predict(X[:1,])

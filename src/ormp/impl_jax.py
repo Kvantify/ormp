@@ -1,7 +1,6 @@
 """Implementations of ORMP using JAX."""
 import jax
 import jax.numpy as jnp
-import numpy as np
 
 
 def ormp_fast_runtime(X, y, k):
