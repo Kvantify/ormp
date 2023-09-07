@@ -1,6 +1,6 @@
-# hot-pursuit
+# ORMP
 
-This repository includes various Python implementations of the HOT pursuit algorithm for solving the sparse linear regression problem.
+This repository includes various Python implementations of the Order Recursive Matching Pursuit (ORMP) algorithm for solving the sparse linear regression problem.
 
 ## Introduction
 
@@ -25,7 +25,7 @@ The solvers come with implementations of the scikit-learn estimator API and ther
 (TODO: Not yet true) The package is available on PyPI and can be installed using
 
 ```
-pip install hot-pursuit
+pip install ormp
 ```
 
 ## Usage
@@ -33,12 +33,12 @@ pip install hot-pursuit
 In the example below, we generate a random example with 100 regressors and ask for a fit that uses at most 10 of them.
 
 ```python
->>> from hotpursuit.sklearn import HotPursuit
+>>> from ormp import OrderRecursiveMatchingPursuit
 >>> from sklearn.datasets import make_regression
 >>> from sklearn.preprocessing import normalize
 >>> X, y = make_regression(noise=4, random_state=0)
 >>> X = normalize(X, norm="l2", axis=0)
->>> reg = HotPursuit(n_nonzero_coefs=10, fit_intercept=False).fit(X, y)
+>>> reg = OrderRecursiveMatchingPursuit(n_nonzero_coefs=10, fit_intercept=False).fit(X, y)
 >>> reg.score(X, y)
 0.9991885378269406
 >>> reg.predict(X[:1,])

@@ -14,8 +14,8 @@ from sklearn.utils._param_validation import (
 from . import impl_np
 
 
-class HotPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
-    """HOT Pursuit model.
+class OrderRecursiveMatchingPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
+    """Order Recursive Matching Pursuit (ORMP) model.
 
     Parameters
     ----------
@@ -60,16 +60,16 @@ class HotPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
 
     Notes
     -----
-    TODO: Reference for HOT pursuit documentation.
+    TODO: Reference for ORMP documentation.
 
     Examples
     --------
-    >>> from hotpursuit.sklearn import HotPursuit
+    >>> from hotpursuit.sklearn import OrderRecursiveMatchingPursuit
     >>> from sklearn.datasets import make_regression
     >>> from sklearn.preprocessing import normalize
     >>> X, y = make_regression(noise=4, random_state=0)
     >>> X = normalize(X, norm="l2", axis=0)
-    >>> reg = HotPursuit(n_nonzero_coefs=10, fit_intercept=False).fit(X, y)
+    >>> reg = OrderRecursiveMatchingPursuit(n_nonzero_coefs=10, fit_intercept=False).fit(X, y)
     >>> reg.score(X, y)
     0.9991885378269406
     >>> reg.predict(X[:1,])
@@ -151,7 +151,7 @@ class HotPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
                 "The number of atoms cannot be more than the number of features"
             )
         if self.implementation == "numpy":
-            implementation = impl_np.hot_pursuit
+            implementation = impl_np.ormp_numpy
         elif self.implementation.startswith("jax"):
             try:
                 from . import impl_jax

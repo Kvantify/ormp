@@ -1,4 +1,4 @@
-"""Implementation of HOT Pursuit using JAX."""
+"""Implementations of ORMP using JAX."""
 import jax
 import jax.numpy as jnp
 import numpy as np
