@@ -1,7 +1,7 @@
 import numpy as np
 
 
-def ormp_numpy(X, y, n_nonzero_coefs, tol, greediness):
+def ormp_numpy(X, y, n_nonzero_coefs, tol=None, greediness=1):
     dtype = np.float32
     X = X.astype(dtype)
     y = y.astype(dtype)
