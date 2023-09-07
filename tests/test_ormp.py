@@ -16,7 +16,7 @@ all_implementations = [
 
 
 @pytest.mark.parametrize("implementation", all_implementations)
-def test_hot_pursuit_raises_when_too_many_coefs_are_required(implementation):
+def test_ormp_raises_when_too_many_coefs_are_required(implementation):
     X = np.array([[1, 0], [0, 1]])
     y = np.array([3, 1])
 
