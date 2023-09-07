@@ -32,8 +32,9 @@ class HotPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
         (i.e. data is expected to be centered).
 
     implementation : str, default="numpy"
-        Which backend to use under the hood; allowed values are "numpy" and
-        "jax". When using "jax", it is assumed that JAX is installed, and that
+        Which backend to use under the hood; allowed values are "numpy",
+        "jax-fast-runtime", "jax-fast-runtime-jit", "jax-fast-compilation-jit".
+        When using a "jax-" method, it is assumed that JAX is installed, and that
         any preconfiguration, such as installation of CUDA to make use of GPUs,
         has already been handled. Refer to the JAX installation guide at
         https://github.com/google/jax/#installation for possible options.
@@ -48,15 +49,6 @@ class HotPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
         JAX implementation, validation ends up taking a significant portion of
         the full running time, so consider making use of this attribute when
         you can guarantee beforehand that inputs are valid.
-
-    jax_jit : bool, default = True
-        Whether or not to JIT compile the JAX implementation. This can lead to
-        great performance improvements at the cost of upfront compilation. Note
-        that in either case, the first fit will take longer than subsequent ones,
-        but not using the JIT functionality gives some flexibility; for example,
-        you can change the value of n_nonzero_coefs without forcing a full
-        recompile. For choices of `implementation` other than JAX, this does
-        nothing.
 
     Attributes
     ----------
@@ -88,10 +80,18 @@ class HotPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
         "n_nonzero_coefs": [Interval(Integral, 1, None, closed="left"), None],
         "tol": [Interval(Real, 0, None, closed="left"), None],
         "fit_intercept": ["boolean"],
-        "implementation": [StrOptions({"numpy", "jax"})],
+        "implementation": [
+            StrOptions(
+                {
+                    "numpy",
+                    "jax-fast-runtime",
+                    "jax-fast-runtime-jit",
+                    "jax-fast-compilation-jit",
+                }
+            )
+        ],
         "greediness": [Interval(Integral, 1, None, closed="left")],
         "skip_validation": ["boolean"],
-        "jax_jit": ["boolean"],
     }
 
     def __init__(
@@ -102,13 +102,12 @@ class HotPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
         fit_intercept=True,
         implementation="numpy",
         greediness=1,
-        skip_validation=False,
-        jax_jit=True
+        skip_validation=False
     ):
         self.n_nonzero_coefs = n_nonzero_coefs
         self.greediness = greediness
         self.implementation = implementation
-        if tol is not None and implementation == "jax":
+        if tol is not None and implementation.startswith("jax"):
             raise NotImplementedError("tol is not yet implemented for the JAX solver")
         self.tol = tol
         if fit_intercept:
@@ -117,7 +116,6 @@ class HotPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
             )
         self.fit_intercept = fit_intercept
         self.skip_validation = skip_validation
-        self.jax_jit = jax_jit
 
     def fit(self, X, y):
         """Fit the model using X, y as training data.
@@ -154,13 +152,12 @@ class HotPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
             )
         if self.implementation == "numpy":
             implementation = impl_np.hot_pursuit
-            indices = impl_np.hot_pursuit
-        elif self.implementation == "jax":
+        elif self.implementation.startswith("jax"):
             try:
                 from . import impl_jax
 
                 implementation = functools.partial(
-                    impl_jax.hot_pursuit, use_jit=self.jax_jit
+                    impl_jax.hot_pursuit, implementation=self.implementation
                 )
             except ImportError as e:
                 raise RuntimeError(
@@ -170,8 +167,9 @@ class HotPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
                     + "dependency, see (TODO: URL)."
                 ) from e
         # TODO: Get actual weights instead of just indices from implementations.
-        indices = implementation(X, y, self.n_nonzero_coefs_, self.tol, self.greediness)
-
+        indices = implementation(
+            X, y, self.n_nonzero_coefs_, tol=self.tol, greediness=self.greediness
+        )
         # Build solution
         reg = LinearRegression(fit_intercept=False).fit(X[:, indices], y)
         self.coef_ = np.zeros(X.shape[1])

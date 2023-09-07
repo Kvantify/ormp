@@ -7,8 +7,15 @@ from sklearn.preprocessing import normalize
 
 from hotpursuit.hotpursuit import HotPursuit
 
+all_implementations = [
+    "numpy",
+    "jax-fast-runtime",
+    "jax-fast-runtime-jit",
+    "jax-fast-compilation-jit",
+]
 
-@pytest.mark.parametrize("implementation", ["numpy", "jax"])
+
+@pytest.mark.parametrize("implementation", all_implementations)
 def test_hot_pursuit_raises_when_too_many_coefs_are_required(implementation):
     X = np.array([[1, 0], [0, 1]])
     y = np.array([3, 1])
@@ -21,7 +28,7 @@ def test_hot_pursuit_raises_when_too_many_coefs_are_required(implementation):
         ).fit(X, y)
 
 
-@pytest.mark.parametrize("implementation", ["numpy", "jax"])
+@pytest.mark.parametrize("implementation", all_implementations)
 def test_empty_example_one_coef(implementation):
     X = np.array([[]])
     y = np.array([])
@@ -34,7 +41,7 @@ def test_empty_example_one_coef(implementation):
         ).fit(X, y)
 
 
-@pytest.mark.parametrize("implementation", ["numpy", "jax"])
+@pytest.mark.parametrize("implementation", all_implementations)
 def test_1d_example(implementation):
     X = np.array([[1]])
     y = np.array([3])
@@ -46,7 +53,7 @@ def test_1d_example(implementation):
     assert np.all(reg_hp.coef_ == y)
 
 
-@pytest.mark.parametrize("implementation", ["numpy", "jax"])
+@pytest.mark.parametrize("implementation", all_implementations)
 def test_2d_example(implementation):
     X = np.array([[1, 0], [0, 1]])
     y = np.array([3, 1])
@@ -58,7 +65,7 @@ def test_2d_example(implementation):
     assert np.all(reg_hp.coef_ == y)
 
 
-@pytest.mark.parametrize("implementation", ["numpy", "jax"])
+@pytest.mark.parametrize("implementation", all_implementations)
 def test_agreement_with_omp_on_simple_example(implementation):
     X, y = make_regression(n_samples=100, n_features=90, noise=4, random_state=0)
     X = normalize(X, norm="l2", axis=0)
@@ -75,7 +82,7 @@ def test_agreement_with_omp_on_simple_example(implementation):
     assert reg_hp.score(X, y) == pytest.approx(reg_omp.score(X, y))
 
 
-@pytest.mark.parametrize("implementation", ["numpy", "jax"])
+@pytest.mark.parametrize("implementation", all_implementations)
 def test_ten_percent_of_features_used_by_default(implementation):
     X, y = make_regression(n_samples=100, n_features=90, noise=4, random_state=0)
     X = normalize(X, norm="l2", axis=0)
